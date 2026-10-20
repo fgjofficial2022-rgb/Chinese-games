@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一起去吃火锅吧！· 互动点餐菜单</title>
+<style>
+  :root{
+    --ivory:#f8f4ec;
+    --paper:#fffdfa;
+    --ink:#2e241f;
+    --ink-soft:#6d5c52;
+    --ink-mute:#9c8b7d;
+    --gold:#b99358;
+    --gold-l:#d8c19a;
+    --gold-pale:#efe4d0;
+    --crimson:#8c1f2b;
+    --crimson-d:#70141f;
+    --line:#e9ddc9;
+    --line-soft:#f0e7d8;
+    --serif:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC","SimSun",serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:var(--ivory);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(185,147,88,.09), transparent 42%),
+      radial-gradient(circle at 88% 92%, rgba(140,31,43,.06), transparent 42%);
+  }
+  #app{position:relative;z-index:1;}
+  button{font-family:inherit;}
+
+  .wrap{max-width:1020px;margin:0 auto;padding:30px 22px 88px;}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    font-size:.94rem;letter-spacing:.06em;padding:11px 22px;border-radius:4px;
+    cursor:pointer;border:1px solid transparent;background:none;
+    transition:all .18s ease;white-space:nowrap;line-height:1.4;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,#9a2430,#79141f);
+    color:#f8eeda;border-color:#6f1220;
+    box-shadow:0 8px 20px rgba(121,20,31,.22);
+  }
+  .btn-primary:hover{background:linear-gradient(180deg,#a92a37,#8a1a27);box-shadow:0 12px 26px rgba(121,20,31,.28);transform:translateY(-1px);}
+  .btn-primary:active{transform:translateY(0);}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink-soft);}
+  .btn-ghost:hover{border-color:var(--gold-l);color:var(--crimson);background:#fffdf8;}
+  .btn-lg{font-size:1rem;padding:14px 40px;letter-spacing:.2em;text-indent:.2em;}
+
+  .cover{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:44px 20px;
+  }
+  .cover-card{
+    position:relative;width:100%;max-width:660px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:52px 40px 46px;
+    text-align:center;
+    box-shadow:0 24px 60px rgba(120,92,54,.10);
+  }
+  .cover-card::before{
+    content:"";position:absolute;inset:10px;border:1px solid var(--gold-pale);pointer-events:none;
+  }
+  .cover-card::after{
+    content:"";position:absolute;left:50%;top:0;width:1px;height:18px;
+    background:linear-gradient(180deg,transparent,var(--gold-l));
+  }
+  .cover-art{display:flex;justify-content:center;margin-bottom:6px;}
+  .cover-art svg{width:min(62vw,250px);height:auto;}
+  .eyebrow{
+    font-size:.64rem;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
+    color:var(--gold);margin:8px 0 16px;
+  }
+  .cover-title{
+    font-family:var(--serif);
+    font-size:clamp(1.72rem,6.2vw,2.5rem);
+    letter-spacing:.14em;text-indent:.14em;
+    color:var(--crimson-d);margin:0 0 12px;font-weight:600;
+  }
+  .cover-en{
+    font-size:.74rem;letter-spacing:.36em;text-indent:.36em;text-transform:uppercase;
+    color:#b08a4a;margin:0 0 22px;
+  }
+  .rule{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px;}
+  .rule::before,.rule::after{
+    content:"";width:64px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold-l),transparent);
+  }
+  .rule span{color:var(--gold);font-size:.58rem;}
+  .cover-desc{
+    color:var(--ink-mute);font-size:.92rem;line-height:2.1;margin:0 0 34px;letter-spacing:.04em;
+  }
+
+  .progress{display:flex;gap:5px;margin-bottom:20px;}
+  .progress i{flex:1;height:2px;background:var(--line);border-radius:1px;transition:.25s;}
+  .progress i.done{background:var(--gold-l);}
+  .progress i.active{background:var(--crimson);}
+
+  .page-head{margin-bottom:26px;}
+  .step-label{
+    font-size:.68rem;letter-spacing:.3em;text-indent:.3em;text-transform:uppercase;
+    color:var(--gold);margin:0 0 12px;
+  }
+  .page-title{
+    font-family:var(--serif);font-weight:600;
+    font-size:clamp(1.3rem,4.3vw,1.74rem);
+    color:var(--crimson-d);margin:0 0 8px;letter-spacing:.08em;
+    display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  }
+  .title-en{
+    font-family:var(--sans);font-size:.68rem;letter-spacing:.28em;text-indent:.28em;
+    text-transform:uppercase;color:var(--gold);font-weight:400;
+  }
+  .page-sub{color:var(--ink-mute);font-size:.85rem;margin:0;letter-spacing:.04em;line-height:1.7;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;flex-wrap:wrap;margin-bottom:20px;
+    padding-bottom:14px;border-bottom:1px solid var(--line-soft);
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.8rem;letter-spacing:.1em;color:var(--crimson);
+    border:1px solid var(--gold-pale);background:#fffaf1;
+    padding:5px 14px;border-radius:2px;
+  }
+  .link{
+    background:none;border:none;color:var(--ink-mute);font-size:.8rem;cursor:pointer;
+    letter-spacing:.06em;padding:4px 2px;border-bottom:1px solid transparent;transition:.16s;
+  }
+  .link:hover{color:var(--crimson);border-bottom-color:var(--gold-l);}
+
+  .types{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
+    gap:18px;
+  }
+  .type-card{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    background:var(--paper);border:1px solid var(--line);border-radius:6px;
+    padding:26px 18px 24px;cursor:pointer;color:inherit;text-align:center;
+    transition:all .2s ease;
+  }
+  .type-card:hover{border-color:var(--gold-l);box-shadow:0 14px 32px rgba(120,92,54,.10);transform:translateY(-2px);}
+  .type-card.selected{
+    border-color:var(--crimson);background:#fffaf3;
+    box-shadow:0 0 0 1px var(--crimson), 0 14px 32px rgba(140,31,43,.10);
+  }
+  .type-art{display:flex;align-items:center;justify-content:center;height:78px;margin-bottom:12px;}
+  .type-art svg{width:88px;height:auto;display:block;}
+  .type-name{
+    font-family:var(--serif);font-size:1.14rem;font-weight:600;
+    color:var(--crimson-d);letter-spacing:.08em;
+  }
+  .type-en{
+    font-size:.6rem;letter-spacing:.24em;text-indent:.24em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:8px;
+  }
+  .type-tag{font-size:.79rem;color:var(--ink-mute);letter-spacing:.06em;}
+
+  .opts{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));
+    gap:12px;align-items:start;
+  }
+  .opts-sm{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px;}
+
+  .opt{
+    position:relative;display:flex;flex-direction:column;gap:3px;align-items:stretch;
+    background:var(--paper);border:1px solid var(--line);border-radius:6px;
+    padding:15px 40px 15px 16px;cursor:pointer;text-align:left;
+    transition:all .16s ease;user-select:none;outline:none;
+  }
+  .opt:focus-visible{border-color:var(--gold);box-shadow:0 0 0 2px rgba(185,147,88,.25);}
+  .opt:hover{border-color:var(--gold-l);background:#fffcf6;}
+  .opt.selected{
+    border-color:var(--crimson);background:#fff8f1;
+    box-shadow:inset 0 0 0 1px var(--crimson);
+  }
+  .opt-n{
+    display:flex;flex-wrap:wrap;align-items:baseline;
+    column-gap:6px;row-gap:0;
+    font-size:.95rem;line-height:1.5;letter-spacing:.03em;color:var(--ink);
+    transition:color .16s;padding-right:4px;
+  }
+  .opt.selected .opt-n{color:var(--crimson-d);}
+  .opt-en{
+    font-size:.7rem;color:var(--gold);
+    letter-spacing:.01em;font-weight:400;
+    white-space:nowrap;
+  }
+  .opt-py{
+    font-size:.7rem;color:var(--ink-mute);line-height:1.4;
+    letter-spacing:.04em;font-style:italic;
+  }
+  .opt-h{
+    font-size:.71rem;line-height:1.6;letter-spacing:.01em;color:var(--ink-mute);
+    word-break:break-word;
+  }
+  .opt-mark{
+    position:absolute;top:13px;right:13px;
+    width:15px;height:15px;border-radius:50%;
+    border:1px solid #ded1bb;background:#fff;
+    display:grid;place-items:center;
+    font-size:.52rem;color:#fff;line-height:1;
+    opacity:0;transform:scale(.7);transition:all .18s ease;
+  }
+  .opt.selected .opt-mark{
+    opacity:1;transform:scale(1);
+    background:var(--crimson);border-color:var(--crimson);
+  }
+
+  .qty-ctl{
+    display:flex;align-items:center;gap:6px;
+    margin-top:9px;padding-top:8px;
+    border-top:1px dashed #eadcc6;
+  }
+  .qty-btn{
+    width:24px;height:24px;flex:0 0 24px;border-radius:50%;
+    border:1px solid var(--gold-l);background:#fff;color:var(--ink-soft);
+    display:grid;place-items:center;
+    font-size:.92rem;line-height:1;font-weight:600;
+    cursor:pointer;padding:0;transition:all .14s ease;
+  }
+  .qty-btn:hover{border-color:var(--crimson);color:var(--crimson);background:#fffdf8;}
+  .qty-btn:active{transform:scale(.92);}
+  .qty-num{
+    min-width:26px;text-align:center;
+    font-size:.86rem;font-weight:600;color:var(--crimson-d);
+    font-variant-numeric:tabular-nums;letter-spacing:.02em;
+  }
+  .qty-num.zero{color:#c8bbab;font-weight:400;}
+  .qty-unit{font-size:.7rem;color:var(--ink-mute);letter-spacing:.04em;}
+
+  .opts-sm .opt{padding:12px 34px 12px 13px;}
+  .opts-sm .opt-h{font-size:.68rem;}
+  .opts-sm .opt-n{font-size:.92rem;}
+  .opts-sm .opt-en,
+  .opts-sm .opt-py{font-size:.66rem;}
+
+  @media (max-width:640px){
+    .opt-en{white-space:normal;word-break:normal;}
+  }
+
+  .sub-panel{
+    margin-top:26px;padding:20px 22px 20px;
+    background:#fffbf3;border:1px solid var(--gold-pale);border-radius:6px;
+  }
+  .sub-title{
+    display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+    font-family:var(--serif);font-size:.98rem;font-weight:600;
+    color:var(--crimson-d);margin:0 0 14px;letter-spacing:.1em;
+  }
+  .sub-title .en{
+    font-family:var(--sans);font-size:.58rem;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--gold);font-weight:400;
+  }
+  .sub-badge{
+    margin-left:auto;font-size:.6rem;letter-spacing:.16em;color:var(--crimson);
+    border:1px solid var(--gold-l);padding:2px 9px;border-radius:2px;
+  }
+
+  .pot-configs{margin-top:14px;}
+  .pot-row{
+    display:flex;flex-wrap:wrap;gap:12px;padding:13px 15px;
+    border:1px dashed #e3cfa6;border-radius:6px;background:#fffcf6;
+    margin-bottom:10px;
+  }
+  .pot-row:last-child{margin-bottom:0;}
+  .pot-label{
+    flex:0 0 100%;font-weight:600;color:var(--crimson-d);
+    font-size:.85rem;letter-spacing:.08em;margin-bottom:2px;
+  }
+  .pot-group{flex:1 1 210px;min-width:0;}
+  .pot-sub{
+    font-size:.7rem;color:var(--ink-mute);letter-spacing:.08em;
+    margin-bottom:7px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip-btn{
+    padding:5px 12px;border:1px solid var(--line);border-radius:4px;
+    background:#fff;font-size:.8rem;cursor:pointer;transition:.15s ease;
+    color:var(--ink-soft);letter-spacing:.02em;
+  }
+  .chip-btn:hover{border-color:var(--gold-l);color:var(--crimson);}
+  .chip-btn.on{
+    border-color:var(--crimson);background:#fff4ec;
+    color:var(--crimson-d);font-weight:600;
+  }
+
+  /* ============ 汽水 / 果汁面板 ============ */
+  .soda-panel{
+    margin-top:20px;padding:16px 18px;
+    border:1px solid var(--gold-pale);border-radius:6px;background:#fffbf3;
+  }
+  .soda-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));
+    gap:10px;
+  }
+  .soda-card{
+    border:1px solid var(--line);border-radius:6px;padding:12px 13px;
+    background:#fff;transition:all .15s ease;
+  }
+  .soda-card.on{border-color:var(--crimson);background:#fff8f1;}
+  .soda-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    gap:8px;flex-wrap:wrap;margin-bottom:8px;
+  }
+  .soda-name{font-size:.92rem;color:var(--ink);letter-spacing:.03em;}
+  .soda-card.on .soda-name{color:var(--crimson-d);}
+  .soda-en{font-size:.66rem;color:var(--gold);}
+
+  .soda-size-row{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:7px 0;
+    border-top:1px dashed #efe4d0;
+  }
+  .soda-size-row:first-of-type{border-top:none;padding-top:2px;}
+  .size-name{
+    font-size:.8rem;letter-spacing:.06em;color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+  .soda-card.on .size-name{color:var(--crimson-d);}
+  .soda-size-row .qty-ctl{
+    margin-top:0;padding-top:0;border-top:none;
+  }
+  .soda-size-row .qty-btn{width:22px;height:22px;flex:0 0 22px;font-size:.86rem;}
+  .soda-size-row .qty-num{min-width:22px;font-size:.82rem;}
+
+  .notice{
+    display:flex;gap:10px;align-items:flex-start;
+    background:#fff7e8;border:1px solid #e8cfa2;color:#8a5a1f;
+    padding:13px 17px;border-radius:4px;
+    font-size:.85rem;line-height:1.75;letter-spacing:.03em;
+    margin-bottom:20px;
+  }
+  .notice .dot-mark{
+    flex:0 0 auto;width:6px;height:6px;border-radius:50%;
+    background:#c9913f;margin-top:8px;
+  }
+  .notice ul{margin:0;padding-left:2px;list-style:none;}
+  .notice li + li{margin-top:2px;}
+  .notice.shake{animation:shake .42s ease;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-5px);}
+    40%{transform:translateX(4px);}
+    60%{transform:translateX(-3px);}
+    80%{transform:translateX(2px);}
+  }
+
+  .nav{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;flex-wrap:wrap;
+    margin-top:40px;padding-top:24px;border-top:1px solid var(--line-soft);
+  }
+  .nav-left{display:flex;gap:10px;flex-wrap:wrap;}
+
+  .panel{
+    background:var(--paper);border:1px solid var(--line);border-radius:6px;
+    padding:6px 24px;
+  }
+  .row{display:flex;gap:20px;padding:18px 0;border-bottom:1px solid var(--line-soft);align-items:flex-start;}
+  .row:last-child{border-bottom:none;}
+  .row-title{
+    flex:0 0 156px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+    font-size:.92rem;color:var(--crimson-d);letter-spacing:.06em;line-height:1.6;
+  }
+  .row-title .no{font-family:var(--serif);font-size:.72rem;color:var(--gold);}
+  .row-title .en{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);}
+  .row-body{flex:1;display:flex;flex-wrap:wrap;gap:7px;padding-top:1px;}
+  .tag{
+    font-size:.84rem;line-height:1.6;letter-spacing:.02em;
+    color:#5d483c;background:#fffaf1;border:1px solid var(--line);
+    padding:3px 11px;border-radius:2px;
+  }
+  .empty{color:#bdb0a2;font-size:.84rem;letter-spacing:.06em;}
+
+  .menu-card{
+    position:relative;background:var(--paper);
+    border:1px solid var(--line);
+    padding:46px 44px 40px;
+    box-shadow:0 24px 60px rgba(120,92,54,.10);
+  }
+  .menu-card::before{
+    content:"";position:absolute;inset:10px;border:1px solid var(--gold-pale);pointer-events:none;
+  }
+  .menu-head{text-align:center;}
+  .menu-art{display:flex;justify-content:center;margin-bottom:10px;}
+  .menu-art svg{width:80px;height:auto;}
+  .menu-kicker{
+    font-size:.6rem;letter-spacing:.4em;text-indent:.4em;text-transform:uppercase;
+    color:var(--gold);margin:6px 0 14px;
+  }
+  .menu-title{
+    font-family:var(--serif);font-weight:600;
+    font-size:clamp(1.42rem,4.6vw,1.98rem);
+    color:var(--crimson-d);letter-spacing:.16em;text-indent:.16em;margin:0 0 10px;
+  }
+  .menu-sub{font-size:.82rem;color:var(--ink-mute);letter-spacing:.1em;margin:0;}
+  .menu-body{margin-top:8px;}
+  .m-sec{border-top:1px solid var(--line-soft);padding-top:16px;margin-top:16px;}
+  .m-sec h3{
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    font-family:var(--serif);font-size:.98rem;font-weight:600;
+    color:var(--crimson-d);letter-spacing:.1em;margin:0 0 9px;
+  }
+  .m-sec h3 .no{font-family:var(--serif);font-size:.7rem;color:var(--gold);}
+  .m-sec h3 .en{
+    font-family:var(--sans);font-size:.58rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--gold);font-weight:400;
+  }
+  .m-items{font-size:.95rem;color:#4b382e;line-height:1.95;letter-spacing:.03em;}
+  .m-items .sep{color:var(--gold-l);margin:0 8px;}
+  .menu-foot{
+    margin:34px 0 0;padding-top:22px;border-top:1px solid var(--line-soft);
+    text-align:center;font-family:var(--serif);
+    color:var(--crimson-d);letter-spacing:.2em;text-indent:.2em;font-size:1.02rem;
+  }
+
+  .music-btn{
+    position:fixed;right:20px;bottom:20px;z-index:120;
+    width:44px;height:44px;border-radius:50%;
+    border:1px solid var(--gold-l);background:var(--paper);
+    display:grid;place-items:center;cursor:pointer;
+    box-shadow:0 8px 22px rgba(120,92,54,.16);
+    font-size:1.05rem;color:var(--crimson);
+    transition:all .18s ease;
+  }
+  .music-btn:hover{border-color:var(--crimson);transform:translateY(-2px);}
+  .music-btn.off{color:var(--ink-mute);opacity:.65;}
+
+  .toast{
+    position:fixed;left:50%;bottom:78px;transform:translate(-50%,14px);
+    background:rgba(46,36,31,.95);color:#f8eeda;
+    padding:11px 24px;border-radius:3px;font-size:.86rem;letter-spacing:.06em;
+    opacity:0;pointer-events:none;transition:all .26s ease;z-index:99;
+    box-shadow:0 12px 30px rgba(0,0,0,.22);
+    max-width:calc(100vw - 40px);text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:640px){
+    .wrap{padding:22px 16px 74px;}
+    .cover{padding:26px 14px;}
+    .cover-card{padding:38px 22px 34px;}
+    .cover-card::before{inset:8px;}
+    .opts{grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:10px;}
+    .opts-sm{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));}
+    .opt{padding:14px 36px 14px 14px;}
+    .opt-n{font-size:.92rem;}
+    .opt-en,.opt-py{font-size:.66rem;}
+    .row{flex-direction:column;gap:8px;}
+    .row-title{flex:none;}
+    .menu-card{padding:34px 20px 30px;}
+    .menu-card::before{inset:7px;}
+    .nav-left{width:100%;}
+    .nav-left .btn{flex:1;}
+    .nav > .btn-primary{width:100%;}
+    .sub-panel{padding:16px 15px;}
+    .soda-panel{padding:14px 13px;}
+    .pot-row{padding:12px 12px;}
+  }
+
+  @page{margin:14mm;}
+  @media print{
+    body{background:#fff;}
+    body::before{display:none;}
+    .no-print{display:none !important;}
+    .music-btn{display:none !important;}
+    .wrap{max-width:100%;padding:0;}
+    .menu-card{box-shadow:none;border:1px solid #d9cfbe;padding:8mm;}
+    .menu-card::before{display:none;}
+    .m-sec{break-inside:avoid;page-break-inside:avoid;}
+    .menu-title{color:#000;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<button type="button" class="music-btn" id="musicBtn" aria-label="背景音乐开关" title="背景音乐">🎵</button>
+
+<script>
+/* =====================================================================
+   1. 内联 SVG 插画
+   ===================================================================== */
+const ART = {
+  cover: `<svg viewBox="0 0 340 290" fill="none" aria-hidden="true">
+    <circle cx="170" cy="150" r="120" stroke="#e8dcc4" stroke-width="1"/>
+    <circle cx="170" cy="150" r="112" stroke="#f0e6d4" stroke-width="1" stroke-dasharray="1 8" stroke-linecap="round"/>
+    <g stroke="#c8a465" stroke-width="1.4" stroke-linecap="round" opacity=".85">
+      <path d="M140 98 C 130 80, 152 72, 142 52"/>
+      <path d="M170 90 C 160 70, 182 62, 172 40"/>
+      <path d="M200 98 C 190 80, 212 72, 202 52"/>
+    </g>
+    <path d="M64 166 C 64 226 110 258 170 258 C 230 258 276 226 276 166" stroke="#3d2d26" stroke-width="1.5" stroke-linecap="round"/>
+    <ellipse cx="170" cy="166" rx="106" ry="26" stroke="#3d2d26" stroke-width="1.5"/>
+    <ellipse cx="170" cy="166" rx="92" ry="19" stroke="#c8a465" stroke-width="1"/>
+    <path d="M80 208 Q 170 230 260 208" stroke="#c8a465" stroke-width="1"/>
+    <path d="M62 158 C 48 160, 48 180, 64 182" stroke="#3d2d26" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M278 158 C 292 160, 292 180, 276 182" stroke="#3d2d26" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M110 264 Q 170 278 230 264" stroke="#dcc9a4" stroke-width="1"/>
+  </svg>`,
+
+  chuan: `<svg viewBox="0 0 72 58" fill="none" aria-hidden="true">
+    <g stroke="#c8a465" stroke-width="1.2" stroke-linecap="round" opacity=".9">
+      <path d="M25 21 C 21 15, 27 12, 23 6"/>
+      <path d="M36 19 C 32 13, 38 10, 34 4"/>
+      <path d="M47 21 C 43 15, 49 12, 45 6"/>
+    </g>
+    <path d="M8 31 C 8 46 18 54 36 54 C 54 54 64 46 64 31" stroke="#3d2d26" stroke-width="1.4" stroke-linecap="round"/>
+    <ellipse cx="36" cy="31" rx="28" ry="7" stroke="#3d2d26" stroke-width="1.4"/>
+    <ellipse cx="36" cy="31" rx="22" ry="4.8" fill="#8c1f2b" opacity=".85"/>
+    <ellipse cx="36" cy="31" rx="22" ry="4.8" stroke="#b99358" stroke-width=".8" opacity=".5"/>
+    <path d="M23 31 q 5 -3.4 9.5 -.2" stroke="#c8a465" stroke-width="1.1" stroke-linecap="round"/>
+    <circle cx="46" cy="32" r="1.5" fill="#c8a465"/>
+    <path d="M6 27 C 1 28, 1 36, 7 37" stroke="#3d2d26" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M66 27 C 71 28, 71 36, 65 37" stroke="#3d2d26" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>`,
+
+  chaoshan: `<svg viewBox="0 0 72 58" fill="none" aria-hidden="true">
+    <g stroke="#c8a465" stroke-width="1.1" stroke-linecap="round" opacity=".8">
+      <path d="M26 20 C 23 16, 28 14, 25 10"/>
+      <path d="M46 20 C 43 16, 48 14, 45 10"/>
+    </g>
+    <path d="M8 31 C 8 46 18 54 36 54 C 54 54 64 46 64 31" stroke="#3d2d26" stroke-width="1.4" stroke-linecap="round"/>
+    <ellipse cx="36" cy="31" rx="28" ry="7" stroke="#3d2d26" stroke-width="1.4"/>
+    <ellipse cx="36" cy="31" rx="22" ry="4.8" fill="#f6efdf"/>
+    <ellipse cx="36" cy="31" rx="22" ry="4.8" stroke="#ddcfae" stroke-width=".8"/>
+    <ellipse cx="25" cy="30.4" rx="6.2" ry="1.9" stroke="#c9a887" stroke-width="1" transform="rotate(-6 25 30.4)"/>
+    <ellipse cx="43" cy="32" rx="6" ry="1.8" stroke="#c9a887" stroke-width="1" transform="rotate(5 43 32)"/>
+    <ellipse cx="33" cy="33" rx="5" ry="1.5" stroke="#c9a887" stroke-width=".9"/>
+    <circle cx="21" cy="31.6" r="1" fill="#8aa86a"/>
+    <circle cx="49" cy="30.6" r="1" fill="#8aa86a"/>
+    <circle cx="38" cy="29.4" r=".9" fill="#8aa86a"/>
+    <path d="M6 27 C 1 28, 1 36, 7 37" stroke="#3d2d26" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M66 27 C 71 28, 71 36, 65 37" stroke="#3d2d26" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>`,
+
+  beijing: `<svg viewBox="0 0 76 62" fill="none" aria-hidden="true">
+    <g stroke="#c8a465" stroke-width="1" stroke-linecap="round" opacity=".7">
+      <path d="M38 9 C 35 6, 40 4, 37 1"/>
+      <path d="M31 10 C 29 8, 32 6, 30 4"/>
+      <path d="M45 10 C 43 8, 46 6, 44 4"/>
+    </g>
+    <rect x="32" y="9" width="12" height="2.6" rx="1.3" stroke="#3d2d26" stroke-width="1.3"/>
+    <rect x="33.8" y="12" width="8.4" height="13" stroke="#3d2d26" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M11 28 C 11 45 22 54 38 54 C 54 54 65 45 65 28" stroke="#3d2d26" stroke-width="1.4" stroke-linecap="round"/>
+    <ellipse cx="38" cy="28" rx="27" ry="7" stroke="#3d2d26" stroke-width="1.4"/>
+    <ellipse cx="38" cy="28" rx="20.5" ry="4.6" fill="#f6efdf"/>
+    <ellipse cx="38" cy="28" rx="20.5" ry="4.6" stroke="#ddcfae" stroke-width=".8"/>
+    <rect x="1" y="30.6" width="11" height="5" rx="2.5" stroke="#3d2d26" stroke-width="1.3"/>
+    <rect x="64" y="30.6" width="11" height="5" rx="2.5" stroke="#3d2d26" stroke-width="1.3"/>
+    <path d="M33 44.5 h10 v6.5 a1.5 1.5 0 0 1 -1.5 1.5 h-7 a1.5 1.5 0 0 1 -1.5 -1.5 z" stroke="#3d2d26" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M35.6 47 v3.4 M38 47 v3.4 M40.4 47 v3.4" stroke="#c8a465" stroke-width="1" stroke-linecap="round"/>
+  </svg>`
+};
+
+/* =====================================================================
+   2. 菜单数据
+   ===================================================================== */
+const DATA = {
+  chuan: {
+    key:'chuan',
+    name:'川渝火锅',
+    en:'SICHUAN · CHONGQING',
+    tagline:'红油翻滚 · 麻辣鲜香',
+    art: ART.chuan,
+    base: {
+      options: [
+        {n:'微微辣'},
+        {n:'微辣'},
+        {n:'中辣'},
+        {n:'本地辣'},
+        {n:'重辣'},
+        {n:'鸳鸯锅底', h:'骨汤＋辣汤辣度自选', spicy:true, fixedClear:'骨汤'}
+      ],
+      spicyOptions: ['微微辣','微辣','中辣','本地辣','重辣']
+    },
+    meat: [
+      {n:'牛肉卷'},
+      {n:'羊肉卷'},
+      {n:'麻辣鲜切牛肉'},
+      {n:'肥肠', en:'Pork Intestines'},
+      {n:'毛肚', en:'Beef Tripe'},
+      {n:'鸭肠'},
+      {n:'黄喉', en:'Beef Aorta'}
+    ],
+    veg: [
+      {n:'菠菜', en:'Spinach', py:'bō cài'},
+      {n:'生菜'},
+      {n:'小白菜'},
+      {n:'白萝卜'},
+      {n:'蘑菇'},
+      {n:'香菇'},
+      {n:'土豆片'},
+      {n:'豆芽', en:'Bean Sprouts'},
+      {n:'贡菜', en:'Crunchy', py:'gòng cài'},
+      {n:'豆腐皮'}
+    ],
+    staple: [
+      {n:'白米饭'},
+      {n:'炒米饭'},
+      {n:'面条'},
+      {n:'方便面'},
+      {n:'细米粉'},
+      {n:'宽粉'}
+    ],
+    sauce: [
+      {n:'香油'},
+      {n:'蚝油'},
+      {n:'酱油'},
+      {n:'生抽'},
+      {n:'醋'},
+      {n:'辣椒油'},
+      {n:'香菜', en:'Coriander'},
+      {n:'小葱'},
+      {n:'蒜末', en:'Minced Garlic'}
+    ],
+    dessert: [
+      {n:'绿豆糕', en:'Mung Bean Cake'},
+      {n:'水果雪冰'},
+      {n:'冰粉', en:'Ice Jelly'},
+      {n:'汤圆／圆子'}
+    ],
+    drink: [
+      {n:'水'},
+      {n:'果汁', en:'Juice', juice:true},
+      {n:'汽水', en:'Soft Drink', soda:true},
+      {n:'啤酒'},
+      {n:'白酒'},
+      {n:'椰奶', en:'Coconut Milk', py:'yē nǎi'},
+      {n:'豆奶'}
+    ]
+  },
+
+  chaoshan: {
+    key:'chaoshan',
+    name:'潮汕牛肉火锅',
+    en:'CHAOSHAN BEEF',
+    tagline:'清汤本味 · 鲜切牛肉',
+    art: ART.chaoshan,
+    base: {
+      options: [
+        {n:'清汤底', h:'牛骨汤'},
+        {n:'番茄清汤底'},
+        {n:'微辣鸳鸯底', clearSide:true, fixedSpicy:'微辣'},
+        {n:'纯清水底', h:'突出牛肉本味'}
+      ],
+      clearOptions: [
+        {n:'清水'},
+        {n:'清汤', h:'牛骨汤'},
+        {n:'番茄'}
+      ]
+    },
+    meat: [
+      {n:'吊龙', en:'Ribeye / Sirloin', py:'diào lóng'},
+      {n:'鲜嫩牛肉', h:'最嫩部位'},
+      {n:'雪花牛肉', h:'脂肪分布均匀，口感嫩滑'},
+      {n:'牛肉丸', h:'手打弹牙'},
+      {n:'牛百叶', en:'Beef Omasum'},
+      {n:'牛筋丸', h:'Q 弹有嚼劲'}
+    ],
+    veg: [
+      {n:'生菜'},
+      {n:'菠菜', en:'Spinach', py:'bō cài'},
+      {n:'白菜'},
+      {n:'金针菇', en:'Enoki Mushroom', py:'jīn zhēn gū'},
+      {n:'香菇'},
+      {n:'白萝卜'},
+      {n:'嫩豆腐'},
+      {n:'老豆腐'},
+      {n:'玉米'},
+      {n:'菜花'},
+      {n:'豆腐皮'}
+    ],
+    staple: [
+      {n:'粿条', en:'Rice Noodle Strips', py:'guǒ tiáo'},
+      {n:'细米粉'},
+      {n:'面条'},
+      {n:'米饭'},
+      {n:'方便面'},
+      {n:'年糕', en:'Rice Cake'}
+    ],
+    sauce: [
+      {n:'沙茶酱', en:'Satay Sauce'},
+      {n:'炸蒜碎'},
+      {n:'芹菜粒', en:'Diced Celery'},
+      {n:'葱花'},
+      {n:'香菜', en:'Coriander'},
+      {n:'小米辣'},
+      {n:'酱油'},
+      {n:'生抽'},
+      {n:'醋'},
+      {n:'花生酱'},
+      {n:'蒜末', en:'Minced Garlic'}
+    ],
+    dessert: [
+      {n:'绿豆爽', en:'Mung Bean Soup'},
+      {n:'水果雪冰'},
+      {n:'冰粉', en:'Ice Jelly'},
+      {n:'汤圆／圆子'}
+    ],
+    drink: [
+      {n:'水'},
+      {n:'果汁', en:'Juice', juice:true},
+      {n:'汽水', en:'Soft Drink', soda:true},
+      {n:'啤酒'},
+      {n:'椰奶', en:'Coconut Milk', py:'yē nǎi'},
+      {n:'功夫茶', h:'潮汕特色'}
+    ]
+  },
+
+  beijing: {
+    key:'beijing',
+    name:'老北京铜锅涮肉',
+    en:'BEIJING COPPER POT',
+    tagline:'清水铜锅 · 手切鲜羊',
+    art: ART.beijing,
+    base: {
+      options: [
+        {n:'清水底', h:'葱 · 姜 · 海米 · 枸杞 · 紫菜\nginger · spring onion · dried shrimp · goji/dried wolfberry · dried nori'},
+        {n:'清汤底', h:'牛骨汤'},
+        {n:'葱香底', h:'葱段 ＋ 姜片'},
+        {n:'菌菇清汤底', h:'香菇提鲜'},
+        {n:'鸳鸯锅', spicy:true, clearSide:true}
+      ],
+      clearOptions: [
+        {n:'清水'},
+        {n:'清汤', h:'牛骨汤'},
+        {n:'菌汤'}
+      ],
+      spicyOptions: ['微辣','香辣','麻辣']
+    },
+    meat: [
+      {n:'手切鲜羊肉'},
+      {n:'羊肉卷'},
+      {n:'牛肉片'},
+      {n:'肥牛卷'},
+      {n:'黑毛肚', en:'Black Beef Tripe'},
+      {n:'猪血'},
+      {n:'鸭血'}
+    ],
+    veg: [
+      {n:'大白菜', h:'经典标配'},
+      {n:'菠菜', en:'Spinach', py:'bō cài'},
+      {n:'生菜'},
+      {n:'金针菇', en:'Enoki Mushroom', py:'jīn zhēn gū'},
+      {n:'蘑菇'},
+      {n:'白萝卜'},
+      {n:'冻豆腐', h:'涮肉经典搭配'},
+      {n:'玉米'},
+      {n:'菜花'},
+      {n:'豆腐皮'}
+    ],
+    staple: [
+      {n:'烧饼', en:'Sesame Flatbread', h:'老北京经典搭配！'},
+      {n:'小油条'},
+      {n:'面条'},
+      {n:'方便面'},
+      {n:'米饭'},
+      {n:'宽粉'},
+      {n:'粉丝', en:'Vermicelli'}
+    ],
+    sauce: [
+      {n:'芝麻酱', h:'主角'},
+      {n:'花生酱'},
+      {n:'韭菜花', en:'Flowering Chive Sauce'},
+      {n:'香油'},
+      {n:'香菜', en:'Coriander'},
+      {n:'葱花'},
+      {n:'辣椒油'},
+      {n:'糖蒜', en:'Sugar-Pickled Garlic'},
+      {n:'蒜末', en:'Minced Garlic'}
+    ],
+    dessert: [
+      {n:'冰糖葫芦', en:'Sugar-Coated Haws', py:'bīng táng hú lu', h:'老北京经典'},
+      {n:'豌豆黄', en:'Pea Cake', h:'京味传统'},
+      {n:'绿豆糕', en:'Mung Bean Cake'},
+      {n:'汤圆／圆子'}
+    ],
+    drink: [
+      {n:'水'},
+      {n:'果汁', en:'Juice', juice:true},
+      {n:'汽水', en:'Soft Drink', soda:true},
+      {n:'茉莉花茶'},
+      {n:'白酒'},
+      {n:'啤酒'}
+    ]
+  }
+};
+
+const CATS = [
+  { key:'base',    zh:'选择锅底',       en:'Broth',         single:false },
+  { key:'meat',    zh:'选择肉类',       en:'Meat',          single:false },
+  { key:'veg',     zh:'选择蔬菜',       en:'Vegetables',    single:false },
+  { key:'staple',  zh:'选择主食',       en:'Staple Food',   single:false },
+  { key:'sauce',   zh:'选择蘸料',       en:'Dipping Sauce', single:false },
+  { key:'dessert', zh:'选择甜点／甜品', en:'Dessert',       single:false },
+  { key:'drink',   zh:'选择饮品／饮料', en:'Drinks',        single:false }
+];
+
+const MULTI_KEYS = ['meat','veg','staple','sauce','dessert','drink'];
+const SODA_SIZES  = ['330ml','500ml'];
+const SODA_BRANDS = [
+  { n:'可口可乐', en:'Coca-Cola' },
+  { n:'百事可乐', en:'Pepsi' },
+  { n:'雪碧',     en:'Sprite', py:'xuě bì' },
+  { n:'芬达',     en:'Fanta',  py:'fēn dá' },
+  { n:'红牛',     en:'Red Bull' }
+];
+
+const JUICE_SIZES = ['小杯','大杯'];
+const JUICE_OPTIONS = [
+  { n:'苹果汁', en:'Apple Juice' },
+  { n:'西瓜汁', en:'Watermelon Juice' },
+  { n:'橙汁',   en:'Orange Juice' }
+];
+
+const MAX_QTY = 30;
+
+/* =====================================================================
+   3. 状态
+   ===================================================================== */
+const state = {
+  type:null,
+  baseSel: [],
+  potConfigs: {},
+  sodaItems: {},
+  juiceItems: {},
+  qty: {},
+  meat:[], veg:[], staple:[], sauce:[], dessert:[], drink:[]
+};
+
+let view = 'cover';
+let stepIndex = 0;
+const app = document.getElementById('app');
+
+/* =====================================================================
+   4. 工具
+   ===================================================================== */
+const esc = s => String(s).replace(/[&<>"']/g, c => (
+  { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
+));
+const br = s => esc(s).replace(/\n/g, '<br>');
+
+function withQty(name){
+  const q = state.qty[name] || 1;
+  return `${name} x${q}`;
+}
+
+function optContent(o){
+  return `<span class="opt-n">${esc(o.n)}${o.en ? `<span class="opt-en">${esc(o.en)}</span>` : ''}</span>`
+       + (o.py ? `<span class="opt-py">${esc(o.py)}</span>` : '')
+       + (o.h ? `<span class="opt-h">${br(o.h)}</span>` : '');
+}
+
+function catOptions(key){
+  const b = DATA[state.type];
+  return key === 'base' ? b.base.options : b[key];
+}
+
+function baseDef(name){
+  return DATA[state.type].base.options.find(o => o.n === name) || null;
+}
+
+function isPot(def){
+  return !!(def && (def.spicy || def.clearSide));
+}
+
+function makeConfig(def){
+  return {
+    clear: def.clearSide ? null : (def.fixedClear || null),
+    spicy: def.spicy ? null : (def.fixedSpicy || null)
+  };
+}
+
+function syncPotConfigs(name){
+  const def = baseDef(name);
+  if (!isPot(def)) return;
+  if (!state.potConfigs[name]) state.potConfigs[name] = [];
+  const arr = state.potConfigs[name];
+  const qty = state.qty[name] || 1;
+  while (arr.length < qty) arr.push(makeConfig(def));
+  while (arr.length > qty) arr.pop();
+}
+
+function resetAll(){
+  state.type = null;
+  state.baseSel = [];
+  state.potConfigs = {};
+  state.sodaItems = {};
+  state.juiceItems = {};
+  state.qty = {};
+  MULTI_KEYS.forEach(k => { state[k] = []; });
+  stepIndex = 0;
+}
+
+function progressHTML(stepNo){
+  let h = '<div class="progress">';
+  for (let i = 1; i <= 9; i++){
+    h += `<i class="${i === stepNo ? 'active' : (i < stepNo ? 'done' : '')}"></i>`;
+  }
+  return h + '</div>';
+}
+
+function sodaHasAny(){
+  return Object.keys(state.sodaItems).some(brand =>
+    Object.values(state.sodaItems[brand]).some(q => q > 0)
+  );
+}
+
+function juiceHasAny(){
+  return Object.keys(state.juiceItems).some(name =>
+    Object.values(state.juiceItems[name]).some(q => q > 0)
+  );
+}
+
+function validateOrder(){
+  const issues = [];
+  if (state.baseSel.length === 0) issues.push('请至少选择一种锅底');
+
+  state.baseSel.forEach(name => {
+    const def = baseDef(name);
+    if (!isPot(def)) return;
+    const qty = state.qty[name] || 1;
+    const arr = state.potConfigs[name] || [];
+    if (arr.length !== qty){
+      issues.push(`「${name}」的锅数配置不完整`);
+      return;
+    }
+    arr.forEach((c, i) => {
+      if (def.clearSide && !c.clear) issues.push(`「${name}」第 ${i+1} 锅请选择清汤`);
+      if (def.spicy && !c.spicy) issues.push(`「${name}」第 ${i+1} 锅请选择辣汤`);
+    });
+  });
+
+  if (state.drink.indexOf('汽水') !== -1 && !sodaHasAny()){
+    issues.push('请至少选择一种汽水规格');
+  }
+  if (state.drink.indexOf('果汁') !== -1 && !juiceHasAny()){
+    issues.push('请至少选择一种果汁规格');
+  }
+  return issues;
+}
+
+/* =====================================================================
+   5. 页面
+   ===================================================================== */
+function coverHTML(){
+  return `
+  <div class="cover">
+    <div class="cover-card">
+      <div class="cover-art">${ART.cover}</div>
+      <p class="eyebrow">A Chinese Hotpot Menu</p>
+      <h1 class="cover-title">一起去吃火锅吧！</h1>
+      <p class="cover-en">Let's Have Hotpot</p>
+      <div class="rule"><span>◆</span></div>
+      <p class="cover-desc">
+        选好锅底，点几样菜，配一碟蘸料。<br>
+        一步一步，做一份属于你们的中文火锅菜单。
+      </p>
+      <button type="button" class="btn btn-primary btn-lg" data-act="start">开始点餐</button>
+    </div>
+  </div>`;
+}
+
+function typeHTML(){
+  const cards = Object.values(DATA).map(b => `
+    <button type="button" class="type-card${state.type === b.key ? ' selected' : ''}" data-type="${b.key}">
+      <span class="type-art">${b.art}</span>
+      <span class="type-name">${esc(b.name)}</span>
+      <span class="type-en">${esc(b.en)}</span>
+      <span class="type-tag">${esc(b.tagline)}</span>
+    </button>
+  `).join('');
+
+  return `<div class="wrap">
+    ${progressHTML(1)}
+    <div class="page-head">
+      <p class="step-label">Step 01 / 09</p>
+      <h2 class="page-title">选择火锅类型</h2>
+      <p class="page-sub">单选 · 每次只能选择一种火锅，选定后进入该火锅专属的菜单。</p>
+    </div>
+    <div class="types">${cards}</div>
+    <div class="nav">
+      <div class="nav-left">
+        <button type="button" class="btn btn-ghost" data-act="to-cover">← 返回封面</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function selectionNote(cat){
+  if (cat.key === 'base'){
+    if (!state.baseSel.length) return '多选 · 尚未选择';
+    return `多选 · 已选 ${state.baseSel.length} 种锅底，可调整份数`;
+  }
+  const n = state[cat.key].length;
+  return n ? `多选 · 已选 ${n} 项，可调整份数` : '多选 · 尚未选择，也可以先跳过';
+}
+
+function potConfigPanel(){
+  const rows = [];
+  state.baseSel.forEach(name => {
+    const def = baseDef(name);
+    if (!isPot(def)) return;
+    const arr = state.potConfigs[name] || [];
+    const qty = state.qty[name] || 1;
+
+    const rowHTML = arr.map((c, idx) => {
+      let clearGroup = '';
+      if (def.clearSide){
+        clearGroup = `<div class="pot-group">
+          <div class="pot-sub">清汤</div>
+          <div class="chips">
+            ${DATA[state.type].base.clearOptions.map(o => `
+              <button type="button" class="chip-btn${c.clear === o.n ? ' on' : ''}"
+                data-pot-clear="${esc(name)}" data-pot-idx="${idx}" data-val="${esc(o.n)}">${esc(o.n)}</button>`).join('')}
+          </div>
+        </div>`;
+      } else if (def.fixedClear){
+        clearGroup = `<div class="pot-group">
+          <div class="pot-sub">清汤</div>
+          <div class="chips"><span class="chip-btn on" style="cursor:default">${esc(def.fixedClear)}</span></div>
+        </div>`;
+      }
+
+      let spicyGroup = '';
+      if (def.spicy){
+        spicyGroup = `<div class="pot-group">
+          <div class="pot-sub">辣汤</div>
+          <div class="chips">
+            ${DATA[state.type].base.spicyOptions.map(o => `
+              <button type="button" class="chip-btn${c.spicy === o ? ' on' : ''}"
+                data-pot-spicy="${esc(name)}" data-pot-idx="${idx}" data-val="${esc(o)}">${esc(o)}</button>`).join('')}
+          </div>
+        </div>`;
+      } else if (def.fixedSpicy){
+        spicyGroup = `<div class="pot-group">
+          <div class="pot-sub">辣汤</div>
+          <div class="chips"><span class="chip-btn on" style="cursor:default">${esc(def.fixedSpicy)}</span></div>
+        </div>`;
+      }
+
+      return `<div class="pot-row">
+        <div class="pot-label">${esc(name)} · 第 ${idx+1} 锅</div>
+        ${clearGroup}
+        ${spicyGroup}
+      </div>`;
+    }).join('');
+
+    rows.push(`<div class="pot-configs">
+      <h3 class="sub-title" style="margin-bottom:10px;">鸳鸯锅配置<span class="en">Dual Pot Setup</span><span class="sub-badge">共 ${qty} 锅</span></h3>
+      ${rowHTML}
+    </div>`);
+  });
+  return rows.join('');
+}
+
+function sizeRowsHTML(items, sizes, keyPrefix){
+  return sizes.map(s => {
+    const q = items[s] || 0;
+    return `<div class="soda-size-row">
+      <span class="size-name">${esc(s)}</span>
+      <div class="qty-ctl">
+        <button type="button" class="qty-btn" data-${keyPrefix}-dec="${esc(items.__name)}|${esc(s)}" aria-label="减少">−</button>
+        <span class="qty-num${q === 0 ? ' zero' : ''}">${q}</span>
+        <button type="button" class="qty-btn" data-${keyPrefix}-inc="${esc(items.__name)}|${esc(s)}" aria-label="增加">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function sodaPanel(){
+  if (state.drink.indexOf('汽水') === -1) return '';
+
+  const cards = SODA_BRANDS.map(b => {
+    const items = Object.assign({ __name: b.n }, state.sodaItems[b.n] || {});
+    const on = Object.values(state.sodaItems[b.n] || {}).some(q => q > 0);
+
+    return `<div class="soda-card${on ? ' on' : ''}">
+      <div class="soda-head">
+        <span class="soda-name">${esc(b.n)}</span>
+        <span class="soda-en">${esc(b.en)}</span>
+      </div>
+      ${b.py ? `<span class="opt-py" style="display:block;margin:-2px 0 4px;">${esc(b.py)}</span>` : ''}
+      ${sizeRowsHTML(items, SODA_SIZES, 'soda')}
+    </div>`;
+  }).join('');
+
+  return `<div class="soda-panel">
+    <h3 class="sub-title">选择汽水<span class="en">Soft Drink</span><span class="sub-badge">按规格计数</span></h3>
+    <div class="soda-grid">${cards}</div>
+  </div>`;
+}
+
+function juicePanel(){
+  if (state.drink.indexOf('果汁') === -1) return '';
+
+  const cards = JUICE_OPTIONS.map(j => {
+    const items = Object.assign({ __name: j.n }, state.juiceItems[j.n] || {});
+    const on = Object.values(state.juiceItems[j.n] || {}).some(q => q > 0);
+
+    return `<div class="soda-card${on ? ' on' : ''}">
+      <div class="soda-head">
+        <span class="soda-name">${esc(j.n)}</span>
+        <span class="soda-en">${esc(j.en)}</span>
+      </div>
+      ${sizeRowsHTML(items, JUICE_SIZES, 'juice')}
+    </div>`;
+  }).join('');
+
+  return `<div class="soda-panel">
+    <h3 class="sub-title">选择果汁<span class="en">Juice</span><span class="sub-badge">按规格计数</span></h3>
+    <div class="soda-grid">${cards}</div>
+  </div>`;
+}
+
+function qtyControl(name){
+  const q = state.qty[name] || 1;
+  return `<div class="qty-ctl" data-qty-wrap="1">
+    <button type="button" class="qty-btn" data-qty="dec" data-name="${esc(name)}" aria-label="减少份数">−</button>
+    <span class="qty-num" aria-live="polite">${q}</span>
+    <button type="button" class="qty-btn" data-qty="inc" data-name="${esc(name)}" aria-label="增加份数">+</button>
+    <span class="qty-unit">份</span>
+  </div>`;
+}
+
+function stepHTML(){
+  const b = DATA[state.type];
+  const cat = CATS[stepIndex];
+  const opts = catOptions(cat.key);
+  const stepNo = stepIndex + 2;
+  const isLast = stepIndex === CATS.length - 1;
+
+  const optsHTML = opts.map((o, i) => {
+    const sel = cat.key === 'base'
+      ? state.baseSel.indexOf(o.n) !== -1
+      : state[cat.key].indexOf(o.n) !== -1;
+    /* 果汁、汽水这两个饮品单独按规格计数，不显示整份数控件 */
+    const isSpec = cat.key === 'drink' && (o.n === '汽水' || o.n === '果汁');
+    return `<div class="opt${sel ? ' selected' : ''}" data-opt="${i}" role="button" tabindex="0">
+      <span class="opt-mark" aria-hidden="true">✓</span>
+      ${optContent(o)}
+      ${(sel && !isSpec) ? qtyControl(o.n) : ''}
+    </div>`;
+  }).join('');
+
+  const potPanel = cat.key === 'base' ? potConfigPanel() : '';
+  const soda = cat.key === 'drink' ? sodaPanel() : '';
+  const juice = cat.key === 'drink' ? juicePanel() : '';
+
+  return `<div class="wrap">
+    <div class="topbar">
+      <span class="chip">${esc(b.name)}</span>
+      <button type="button" class="link" data-nav="type">更换火锅类型</button>
+    </div>
+    ${progressHTML(stepNo)}
+    <div class="page-head">
+      <p class="step-label">Step ${String(stepNo).padStart(2,'0')} / 09</p>
+      <h2 class="page-title">${esc(cat.zh)}<span class="title-en">${esc(cat.en)}</span></h2>
+      <p class="page-sub">${esc(selectionNote(cat))}</p>
+    </div>
+    <div class="opts">${optsHTML}</div>
+    ${potPanel}
+    ${soda}
+    ${juice}
+    <div class="nav">
+      <div class="nav-left">
+        <button type="button" class="btn btn-ghost" data-nav="prev">← 上一步</button>
+        <button type="button" class="btn btn-ghost" data-nav="clear">清空本类</button>
+      </div>
+      <button type="button" class="btn btn-primary" data-nav="next">${isLast ? '检查订单 →' : '下一步 →'}</button>
+    </div>
+  </div>`;
+}
+
+function menuSections(){
+  const b = DATA[state.type];
+  const baseItems = [];
+
+  state.baseSel.forEach(name => {
+    const def = baseDef(name);
+    const q = state.qty[name] || 1;
+    let line = withQty(name);
+    if (isPot(def)){
+      const arr = state.potConfigs[name] || [];
+      const parts = arr.map((c, i) => {
+        const seg = [];
+        if (c.clear) seg.push(`清汤：${c.clear}`);
+        if (c.spicy) seg.push(`辣汤：${c.spicy}`);
+        return `第${i+1}锅 ${seg.join(' · ')}`;
+      });
+      if (parts.length) line += '（' + parts.join('；') + '）';
+    }
+    baseItems.push(line);
+  });
+
+  const drinks = [];
+  state.drink.forEach(d => {
+    if (d === '汽水'){
+      Object.keys(state.sodaItems).forEach(brand => {
+        const items = state.sodaItems[brand];
+        SODA_SIZES.forEach(size => {
+          const q = items[size] || 0;
+          if (q > 0) drinks.push(`汽水（${brand} · ${size}）x${q}`);
+        });
+      });
+    } else if (d === '果汁'){
+      Object.keys(state.juiceItems).forEach(name => {
+        const items = state.juiceItems[name];
+        JUICE_SIZES.forEach(size => {
+          const q = items[size] || 0;
+          if (q > 0) drinks.push(`果汁（${name} · ${size}）x${q}`);
+        });
+      });
+    } else {
+      drinks.push(withQty(d));
+    }
+  });
+
+  return [
+    { zh:'火锅类型',   en:'',              items:[b.name] },
+    { zh:'锅底及辣度', en:'Broth',         items:baseItems },
+    { zh:'肉类',       en:'Meat',          items:state.meat.map(withQty) },
+    { zh:'蔬菜',       en:'Vegetables',    items:state.veg.map(withQty) },
+    { zh:'主食',       en:'Staple Food',   items:state.staple.map(withQty) },
+    { zh:'蘸料',       en:'Dipping Sauce', items:state.sauce.map(withQty) },
+    { zh:'甜点／甜品', en:'Dessert',       items:state.dessert.map(withQty) },
+    { zh:'饮品／饮料', en:'Drinks',        items:drinks }
+  ];
+}
+
+function checkHTML(){
+  const rows = menuSections();
+  const issues = validateOrder();
+
+  const notice = issues.length ? `
+    <div class="notice" id="notice">
+      <span class="dot-mark"></span>
+      <ul>${issues.map(t => `<li>· ${esc(t)}</li>`).join('')}</ul>
+    </div>` : '';
+
+  const body = rows.map((r, i) => `
+    <div class="row">
+      <div class="row-title">
+        <span class="no">${String(i+1).padStart(2,'0')}</span>
+        <span>${esc(r.zh)}</span>
+        ${r.en ? `<span class="en">${esc(r.en)}</span>` : ''}
+      </div>
+      <div class="row-body">${
+        r.items.length
+          ? r.items.map(t => `<span class="tag">${esc(t)}</span>`).join('')
+          : '<span class="empty">未选择</span>'
+      }</div>
+    </div>
+  `).join('');
+
+  return `<div class="wrap">
+    ${progressHTML(9)}
+    <div class="page-head">
+      <p class="step-label">Step 09 / 09</p>
+      <h2 class="page-title">检查订单<span class="title-en">Review</span></h2>
+      <p class="page-sub">请确认下面的选择，如需调整可返回修改。</p>
+    </div>
+    ${notice}
+    <div class="panel">${body}</div>
+    <div class="nav">
+      <div class="nav-left">
+        <button type="button" class="btn btn-ghost" data-act="back-to-steps">← 返回修改</button>
+      </div>
+      <button type="button" class="btn btn-primary btn-lg" data-act="generate">生成我的火锅菜单</button>
+    </div>
+  </div>`;
+}
+
+function finalHTML(){
+  const b = DATA[state.type];
+  const rows = menuSections();
+
+  const body = rows.map((r, i) => `
+    <section class="m-sec">
+      <h3>
+        <span class="no">${String(i+1).padStart(2,'0')}</span>
+        <span>${esc(r.zh)}</span>
+        ${r.en ? `<span class="en">${esc(r.en)}</span>` : ''}
+      </h3>
+      <div class="m-items">${
+        r.items.length
+          ? r.items.map(t => `<span>${esc(t)}</span>`).join('<span class="sep">·</span>')
+          : '<span class="empty">未选择</span>'
+      }</div>
+    </section>
+  `).join('');
+
+  return `<div class="wrap">
+    <div class="menu-card" id="menuCard">
+      <div class="menu-head">
+        <div class="menu-art">${b.art}</div>
+        <p class="menu-kicker">Hotpot Menu</p>
+        <h1 class="menu-title">我的火锅菜单</h1>
+        <p class="menu-sub">${esc(b.name)} · ${esc(b.tagline)}</p>
+      </div>
+      <div class="menu-body">${body}</div>
+      <p class="menu-foot">祝你们用餐愉快！</p>
+    </div>
+    <div class="nav no-print">
+      <div class="nav-left">
+        <button type="button" class="btn btn-ghost" data-act="modify">返回修改</button>
+        <button type="button" class="btn btn-ghost" data-act="restart">重新点餐</button>
+        <button type="button" class="btn btn-ghost" data-act="copy">复制菜单</button>
+      </div>
+      <button type="button" class="btn btn-primary" data-act="print">打印／保存为 PDF</button>
+    </div>
+  </div>`;
+}
+
+/* =====================================================================
+   6. 渲染
+   ===================================================================== */
+function render(scrollTop = true){
+  if (view === 'cover')      app.innerHTML = coverHTML();
+  else if (view === 'type')  app.innerHTML = typeHTML();
+  else if (view === 'step')  app.innerHTML = stepHTML();
+  else if (view === 'check') app.innerHTML = checkHTML();
+  else if (view === 'final') app.innerHTML = finalHTML();
+
+  if (scrollTop) window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* =====================================================================
+   7. 交互
+   ===================================================================== */
+function pickType(key){
+  if (state.type !== key){
+    state.type = key;
+    state.baseSel = [];
+    state.potConfigs = {};
+    state.sodaItems = {};
+    state.juiceItems = {};
+    state.qty = {};
+    MULTI_KEYS.forEach(k => { state[k] = []; });
+  }
+  view = 'step';
+  stepIndex = 0;
+  render(true);
+}
+
+function pickOption(i){
+  const cat = CATS[stepIndex];
+  const o = catOptions(cat.key)[i];
+  if (!o) return;
+
+  if (cat.key === 'base'){
+    const idx = state.baseSel.indexOf(o.n);
+    if (idx >= 0){
+      state.baseSel.splice(idx, 1);
+      delete state.qty[o.n];
+      delete state.potConfigs[o.n];
+    } else {
+      state.baseSel.push(o.n);
+      state.qty[o.n] = 1;
+      syncPotConfigs(o.n);
+    }
+  } else {
+    const arr = state[cat.key];
+    const idx = arr.indexOf(o.n);
+    if (idx >= 0){
+      arr.splice(idx, 1);
+      delete state.qty[o.n];
+      if (cat.key === 'drink' && o.n === '汽水') state.sodaItems = {};
+      if (cat.key === 'drink' && o.n === '果汁') state.juiceItems = {};
+    } else {
+      arr.push(o.n);
+      state.qty[o.n] = 1;
+    }
+  }
+  render(false);
+}
+
+function changeQty(name, delta){
+  const cur = state.qty[name] || 1;
+  const next = Math.min(MAX_QTY, Math.max(1, cur + delta));
+  if (next === cur){
+    if (delta < 0) toast('最少 1 份，如需取消请点击菜品卡片');
+    else toast('最多 ' + MAX_QTY + ' 份');
+    return;
+  }
+  state.qty[name] = next;
+  if (state.baseSel.indexOf(name) !== -1) syncPotConfigs(name);
+  render(false);
+}
+
+/* 通用规格计数：汽水 / 果汁 */
+function changeSpecQty(store, name, size, delta){
+  if (!store[name]) store[name] = {};
+  const items = store[name];
+  const cur = items[size] || 0;
+  const next = Math.min(MAX_QTY, Math.max(0, cur + delta));
+
+  if (next === cur){
+    if (delta < 0) toast('已经是 0 份了');
+    else toast('最多 ' + MAX_QTY + ' 份');
+    return;
+  }
+
+  if (next === 0) delete items[size];
+  else items[size] = next;
+
+  if (Object.keys(items).length === 0) delete store[name];
+
+  render(false);
+}
+
+function handleNav(nav){
+  if (nav === 'prev'){
+    if (stepIndex > 0){ stepIndex--; render(true); }
+    else { view = 'type'; render(true); }
+  } else if (nav === 'next'){
+    if (CATS[stepIndex].key === 'base' && !state.baseSel.length){
+      toast('请先选择至少一种锅底');
+      return;
+    }
+    if (stepIndex < CATS.length - 1){ stepIndex++; render(true); }
+    else { view = 'check'; render(true); }
+  } else if (nav === 'clear'){
+    const key = CATS[stepIndex].key;
+    if (key === 'base'){
+      state.baseSel.forEach(n => { delete state.qty[n]; delete state.potConfigs[n]; });
+      state.baseSel = [];
+    } else {
+      state[key].forEach(n => delete state.qty[n]);
+      state[key] = [];
+      if (key === 'drink'){ state.sodaItems = {}; state.juiceItems = {}; }
+    }
+    render(false);
+  } else if (nav === 'type'){
+    view = 'type';
+    render(true);
+  }
+}
+
+function handleAct(act){
+  switch (act){
+    case 'start':
+      Music.start();
+      updateMusicBtn();
+      view = 'type'; render(true);
+      break;
+    case 'to-cover':      view = 'cover'; render(true); break;
+    case 'back-to-steps': view = 'step'; stepIndex = CATS.length - 1; render(true); break;
+
+    case 'generate': {
+      const issues = validateOrder();
+      if (issues.length){
+        toast(issues[0]);
+        const n = document.getElementById('notice');
+        if (n){ n.classList.remove('shake'); void n.offsetWidth; n.classList.add('shake'); }
+        return;
+      }
+      view = 'final'; render(true);
+      break;
+    }
+
+    case 'modify':  view = 'check'; render(true); break;
+    case 'restart': resetAll(); view = 'cover'; render(true); break;
+    case 'copy':    copyMenu(); break;
+    case 'print':   window.print(); break;
+  }
+}
+
+app.addEventListener('click', function (e){
+  /* 汽水规格 */
+  const sodaInc = e.target.closest('[data-soda-inc]');
+  if (sodaInc){
+    e.preventDefault();
+    const [brand, size] = sodaInc.dataset.sodaInc.split('|');
+    changeSpecQty(state.sodaItems, brand, size, 1);
+    return;
+  }
+  const sodaDec = e.target.closest('[data-soda-dec]');
+  if (sodaDec){
+    e.preventDefault();
+    const [brand, size] = sodaDec.dataset.sodaDec.split('|');
+    changeSpecQty(state.sodaItems, brand, size, -1);
+    return;
+  }
+
+  /* 果汁规格 */
+  const juiceInc = e.target.closest('[data-juice-inc]');
+  if (juiceInc){
+    e.preventDefault();
+    const [name, size] = juiceInc.dataset.juiceInc.split('|');
+    changeSpecQty(state.juiceItems, name, size, 1);
+    return;
+  }
+  const juiceDec = e.target.closest('[data-juice-dec]');
+  if (juiceDec){
+    e.preventDefault();
+    const [name, size] = juiceDec.dataset.juiceDec.split('|');
+    changeSpecQty(state.juiceItems, name, size, -1);
+    return;
+  }
+
+  /* 普通菜品 / 锅底份数 */
+  const qtyBtn = e.target.closest('[data-qty]');
+  if (qtyBtn){
+    e.preventDefault();
+    changeQty(qtyBtn.dataset.name, qtyBtn.dataset.qty === 'inc' ? 1 : -1);
+    return;
+  }
+
+  /* 鸳鸯锅配置 */
+  const potClear = e.target.closest('[data-pot-clear]');
+  if (potClear){
+    e.preventDefault();
+    const name = potClear.dataset.potClear;
+    const idx = Number(potClear.dataset.potIdx);
+    const arr = state.potConfigs[name];
+    if (arr && arr[idx]) arr[idx].clear = potClear.dataset.val;
+    render(false);
+    return;
+  }
+  const potSpicy = e.target.closest('[data-pot-spicy]');
+  if (potSpicy){
+    e.preventDefault();
+    const name = potSpicy.dataset.potSpicy;
+    const idx = Number(potSpicy.dataset.potIdx);
+    const arr = state.potConfigs[name];
+    if (arr && arr[idx]) arr[idx].spicy = potSpicy.dataset.val;
+    render(false);
+    return;
+  }
+
+  /* 主选项 */
+  const optEl = e.target.closest('[data-opt]');
+  if (optEl){
+    pickOption(Number(optEl.dataset.opt));
+    return;
+  }
+
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.type){ pickType(btn.dataset.type); return; }
+  if (btn.dataset.nav){ handleNav(btn.dataset.nav); return; }
+  if (btn.dataset.act){ handleAct(btn.dataset.act); return; }
+});
+
+app.addEventListener('keydown', function (e){
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const card = e.target.closest('[data-opt]');
+  if (!card) return;
+  e.preventDefault();
+  card.click();
+});
+
+/* =====================================================================
+   8. 复制菜单
+   ===================================================================== */
+function menuText(){
+  const b = DATA[state.type];
+  const rows = menuSections();
+  const line = '────────────────────';
+  let t = '我的火锅菜单\n';
+  t += b.name + ' · ' + b.tagline + '\n';
+  t += line + '\n';
+  rows.forEach(r => {
+    t += r.zh + (r.en ? ' ' + r.en : '') + '：'
+       + (r.items.length ? r.items.join('、') : '未选择') + '\n';
+  });
+  t += line + '\n祝你们用餐愉快！';
+  return t;
+}
+
+function copyMenu(){
+  const text = menuText();
+
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (err){ ok = false; }
+    document.body.removeChild(ta);
+    toast(ok ? '菜单已复制到剪贴板' : '复制失败，请手动选择文字复制');
+  }
+
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text)
+      .then(() => toast('菜单已复制到剪贴板'))
+      .catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+let toastEl = null, toastTimer = null;
+function toast(msg){
+  if (!toastEl){
+    toastEl = document.createElement('div');
+    toastEl.className = 'toast';
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  void toastEl.offsetWidth;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2400);
+}
+
+/* =====================================================================
+   9. 轻音乐（Web Audio 合成 · 轻快小提琴）
+   ===================================================================== */
+const Music = {
+  ctx: null,
+  master: null,
+  filter: null,
+  delay: null,
+  timer: null,
+  playing: false,
+  bar: 0,
+  bpm: 104,
+
+  /* C - G - Am - F - C - G - Am - F */
+  progression: [
+    { root: 130.81, chord: [261.63, 329.63, 392.00] },
+    { root: 98.00,  chord: [196.00, 246.94, 293.66] },
+    { root: 110.00, chord: [220.00, 261.63, 329.63] },
+    { root: 87.31,  chord: [174.61, 220.00, 261.63] },
+    { root: 130.81, chord: [261.63, 329.63, 392.00] },
+    { root: 98.00,  chord: [196.00, 246.94, 293.66] },
+    { root: 110.00, chord: [220.00, 261.63, 329.63] },
+    { root: 87.31,  chord: [174.61, 220.00, 261.63] }
+  ],
+
+  /* 8 小节 × 8 个八分音符，0 = 休止 */
+  melody: [
+    659.25, 0, 783.99, 0, 659.25, 523.25, 587.33, 0,
+    587.33, 0, 493.88, 0, 392.00, 440.00, 493.88, 0,
+    523.25, 0, 659.25, 0, 880.00, 783.99, 659.25, 0,
+    698.46, 0, 659.25, 0, 523.25, 587.33, 659.25, 0,
+    783.99, 0, 659.25, 0, 523.25, 0, 587.33, 0,
+    659.25, 0, 587.33, 0, 493.88, 0, 392.00, 0,
+    880.00, 0, 783.99, 0, 659.25, 0, 523.25, 0,
+    587.33, 0, 659.25, 0, 698.46, 0, 783.99, 0
+  ],
+
+  init(){
+    if (this.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    this.ctx = new AC();
+
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0;
+
+    this.filter = this.ctx.createBiquadFilter();
+    this.filter.type = 'lowpass';
+    this.filter.frequency.value = 3200;
+    this.filter.Q.value = 0.4;
+
+    this.delay = this.ctx.createDelay(1.0);
+    this.delay.delayTime.value = 0.26;
+    const fb = this.ctx.createGain(); fb.gain.value = 0.20;
+    const wet = this.ctx.createGain(); wet.gain.value = 0.16;
+
+    this.master.connect(this.filter);
+    this.filter.connect(this.ctx.destination);
+    this.filter.connect(this.delay);
+    this.delay.connect(fb);
+    fb.connect(this.delay);
+    this.delay.connect(wet);
+    wet.connect(this.ctx.destination);
+  },
+
+  /* 小提琴：双锯齿 + 颤音 + 低通 */
+  violin(freq, time, dur, vol){
+    if (!this.ctx) return;
+    const o1 = this.ctx.createOscillator();
+    const o2 = this.ctx.createOscillator();
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    const filt = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+
+    o1.type = 'sawtooth';
+    o2.type = 'sawtooth';
+    o1.frequency.value = freq;
+    o2.frequency.value = freq * 1.004;
+
+    lfo.type = 'sine';
+    lfo.frequency.value = 5.4;
+    lfoGain.gain.value = freq * 0.0055;
+    lfo.connect(lfoGain);
+    lfoGain.connect(o1.frequency);
+    lfoGain.connect(o2.frequency);
+
+    filt.type = 'lowpass';
+    filt.frequency.value = 2400;
+    filt.Q.value = 1.1;
+
+    const atk = 0.08;
+    const rel = Math.min(0.3, dur * 0.5);
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.linearRampToValueAtTime(vol, time + atk);
+    g.gain.linearRampToValueAtTime(vol * 0.85, time + dur - rel);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+
+    o1.connect(filt);
+    o2.connect(filt);
+    filt.connect(g);
+    g.connect(this.master);
+
+    o1.start(time); o2.start(time); lfo.start(time);
+    o1.stop(time + dur + 0.06);
+    o2.stop(time + dur + 0.06);
+    lfo.stop(time + dur + 0.06);
+  },
+
+  /* 拨弦伴奏 */
+  pluck(freq, time, vol){
+    if (!this.ctx) return;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.linearRampToValueAtTime(vol, time + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.30);
+    o.connect(g);
+    g.connect(this.master);
+    o.start(time);
+    o.stop(time + 0.33);
+  },
+
+  /* 低音 */
+  bass(freq, time, dur, vol){
+    if (!this.ctx) return;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.linearRampToValueAtTime(vol, time + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    o.connect(g);
+    g.connect(this.master);
+    o.start(time);
+    o.stop(time + dur + 0.05);
+  },
+
+  schedule(){
+    if (!this.playing || !this.ctx) return;
+    const beat = 60 / this.bpm;
+    const now = this.ctx.currentTime + 0.1;
+    const barIdx = this.bar % 8;
+    const prog = this.progression[barIdx];
+
+    /* 低音：第一拍根音，第三拍五度 */
+    this.bass(prog.root, now, beat * 1.8, 0.060);
+    this.bass(prog.root * 1.5, now + beat * 2, beat * 1.8, 0.045);
+
+    /* 拨弦伴奏：每半拍一个和弦音，上下行交替 */
+    const pat = [0, 1, 2, 1, 0, 2, 1, 2];
+    for (let i = 0; i < 8; i++){
+      const f = prog.chord[pat[i]] * 2;
+      this.pluck(f, now + i * beat * 0.5, 0.030);
+    }
+
+    /* 小提琴旋律 */
+    const base = barIdx * 8;
+    for (let i = 0; i < 8; i++){
+      const f = this.melody[base + i];
+      if (f) this.violin(f, now + i * beat * 0.5, beat * 1.4, 0.050);
+    }
+
+    this.bar = (this.bar + 1) % 8;
+    this.timer = setTimeout(() => this.schedule(), beat * 4 * 1000);
+  },
+
+  start(){
+    this.init();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.playing) return;
+    this.playing = true;
+    this.bar = 0;
+    this.master.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.master.gain.setValueAtTime(this.master.gain.value, this.ctx.currentTime);
+    this.master.gain.linearRampToValueAtTime(0.13, this.ctx.currentTime + 1.8);
+    this.schedule();
+  },
+
+  stop(){
+    if (!this.ctx) return;
+    this.playing = false;
+    clearTimeout(this.timer);
+    this.master.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.master.gain.setValueAtTime(this.master.gain.value, this.ctx.currentTime);
+    this.master.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.6);
+  },
+
+  toggle(){
+    if (this.playing) this.stop();
+    else this.start();
+  }
+};
+
+const musicBtn = document.getElementById('musicBtn');
+function updateMusicBtn(){
+  if (Music.playing){
+    musicBtn.textContent = '🎵';
+    musicBtn.classList.remove('off');
+    musicBtn.title = '关闭背景音乐';
+  } else {
+    musicBtn.textContent = '🔇';
+    musicBtn.classList.add('off');
+    musicBtn.title = '开启背景音乐';
+  }
+}
+musicBtn.addEventListener('click', function (){
+  Music.toggle();
+  updateMusicBtn();
+});
+updateMusicBtn();
+
+function autoStartMusic(){
+  Music.start();
+  updateMusicBtn();
+  window.removeEventListener('pointerdown', autoStartMusic);
+  window.removeEventListener('keydown', autoStartMusic);
+}
+window.addEventListener('pointerdown', autoStartMusic, { once:true });
+window.addEventListener('keydown', autoStartMusic, { once:true });
+
+/* =====================================================================
+   10. 启动
+   ===================================================================== */
+render(true);
+</script>
+</body>
+</html>
